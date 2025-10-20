@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { PrismaClient } from '../backend/generated/prisma/index.js';
+import { PrismaClient } from './generated/prisma/index.js';
+import postsRouter from './routes/posts.js';
 
 dotenv.config();
 
@@ -19,6 +20,12 @@ prisma.$connect()
   .catch((error: any) => {
     console.error('Database connection error:', error);
   });
+
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to the Blog API' });
+});
+
+app.use('/posts', postsRouter);
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
