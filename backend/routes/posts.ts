@@ -1,17 +1,17 @@
 import express from 'express';
-import { PrismaClient } from '../generated/prisma/index.js';
+import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   try {
     const posts = await prisma.post.findMany({
       include: { author: true, comments: true }
     });
-    res.json(posts);
+    return res.json(posts);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch posts' });
+    return res.status(500).json({ error: 'Failed to fetch posts' });
   }
 });
 
@@ -25,9 +25,9 @@ router.get('/:id', async (req, res) => {
     if (!post) {
       return res.status(404).json({ error: 'Post not found' });
     }
-    res.json(post);
+    return res.json(post);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch post' });
+    return res.status(500).json({ error: 'Failed to fetch post' });
   }
 });
 
@@ -37,9 +37,9 @@ router.post('/', async (req, res) => {
     const post = await prisma.post.create({
       data: { title, content, authorId }
     });
-    res.status(201).json(post);
+    return res.status(201).json(post);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create post' });
+    return res.status(500).json({ error: 'Failed to create post' });
   }
 });
 
@@ -51,9 +51,9 @@ router.put('/:id', async (req, res) => {
       where: { id },
       data: { title, content, published }
     });
-    res.json(post);
+    return res.json(post);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update post' });
+    return res.status(500).json({ error: 'Failed to update post' });
   }
 });
 
@@ -63,9 +63,9 @@ router.delete('/:id', async (req, res) => {
     await prisma.post.delete({
       where: { id }
     });
-    res.status(204).send();
+    return res.status(204).send();
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete post' });
+    return res.status(500).json({ error: 'Failed to delete post' });
   }
 });
 

@@ -1,7 +1,10 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { PrismaClient } from './generated/prisma/index.js';
+import { PrismaClient } from '@prisma/client';
+import './config/passport.js';
 import postsRouter from './routes/posts.js';
+import usersRouter from './routes/users.js';
+import { authenticateJWT } from './middleware/auth.js';
 
 dotenv.config();
 
@@ -21,11 +24,8 @@ prisma.$connect()
     console.error('Database connection error:', error);
   });
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the Blog API' });
-});
-
-app.use('/posts', postsRouter);
+app.use('/posts', authenticateJWT, postsRouter);
+app.use('/users', usersRouter);
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
