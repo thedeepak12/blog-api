@@ -30,7 +30,7 @@ prisma.$connect()
     console.error('Database connection error:', error);
   });
 
-app.use('/posts', authenticateJWT, postsRouter);
+app.use('/posts', postsRouter);
 app.use('/users', usersRouter);
 
 app.listen(port, () => {

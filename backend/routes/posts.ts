@@ -7,9 +7,10 @@ const prisma = new PrismaClient();
 router.get('/', async (_req, res) => {
   try {
     const posts = await prisma.post.findMany({
-      include: { author: true, comments: true }
+      include: { author: true },
+      orderBy: { createdAt: 'desc' }
     });
-    return res.json(posts);
+    return res.json({ posts });
   } catch (error) {
     return res.status(500).json({ error: 'Failed to fetch posts' });
   }
