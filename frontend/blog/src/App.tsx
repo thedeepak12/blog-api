@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import LoginForm from './pages/LoginForm';
 import SignupForm from './pages/SignupForm';
+import PostPage from './pages/PostPage';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -20,6 +21,16 @@ function App() {
           element={
             token ? (
               <Home onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/posts/:id"
+          element={
+            token ? (
+              <PostPage onLogout={handleLogout} />
             ) : (
               <Navigate to="/login" replace />
             )

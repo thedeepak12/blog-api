@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 interface BlogPostData {
   id: string;
   title: string;
@@ -15,6 +17,8 @@ interface BlogPostProps {
 }
 
 export default function BlogPost({ post }: BlogPostProps) {
+  const navigate = useNavigate();
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toISOString().split('T')[0];
   };
@@ -22,7 +26,7 @@ export default function BlogPost({ post }: BlogPostProps) {
   return (
     <article className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6 shadow-lg">
       <div className="mb-4">
-        <h2 className="text-2xl font-bold text-white mb-2 hover:text-blue-400 transition-colors cursor-pointer">
+        <h2 className="text-2xl font-bold text-white mb-2 hover:text-blue-400 transition-colors cursor-pointer" onClick={() => navigate(`/posts/${post.id}`)}>
           {post.title}
         </h2>
         <div className="flex items-center text-sm text-gray-400 space-x-4">
@@ -41,7 +45,10 @@ export default function BlogPost({ post }: BlogPostProps) {
       </div>
 
       <div className="flex items-center justify-end">
-        <button className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors cursor-pointer">
+        <button
+          className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors cursor-pointer"
+          onClick={() => navigate(`/posts/${post.id}`)}
+        >
           Read More
         </button>
       </div>
