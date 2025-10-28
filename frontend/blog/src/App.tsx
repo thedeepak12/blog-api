@@ -18,23 +18,11 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={
-            token ? (
-              <Home onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
+          element={<Home onLogout={handleLogout} isAuthenticated={!!token} />}
         />
         <Route
           path="/posts/:id"
-          element={
-            token ? (
-              <PostPage onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
+          element={<PostPage onLogout={handleLogout} isAuthenticated={!!token} />}
         />
         <Route path="/login" element={<LoginForm setToken={setToken} />} />
         <Route path="/signup" element={<SignupForm setToken={setToken} />} />
