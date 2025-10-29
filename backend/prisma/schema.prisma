@@ -21,8 +21,18 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  posts    Post[]
   comments Comment[]
+}
+
+model Admin {
+  id      String   @id @default(cuid())
+  username String   @unique
+  email    String   @unique
+  password String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts Post[]
 }
 
 model Post {
@@ -34,7 +44,7 @@ model Post {
   updatedAt DateTime @updatedAt
 
   authorId String
-  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author   Admin    @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments Comment[]
 }
 
