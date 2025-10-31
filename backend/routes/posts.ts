@@ -1,8 +1,8 @@
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import { authenticateJWT } from '../middleware/auth.js';
+import prisma from '../prisma/client.js';
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 router.get('/', async (_req, res) => {
   try {
@@ -83,6 +83,77 @@ router.delete('/:id', async (req, res) => {
     return res.status(204).send();
   } catch (error) {
     return res.status(500).json({ error: 'Failed to delete post' });
+  }
+});
+
+router.post('/:postId/comments', authenticateJWT, async (req, res) => {
+  console.log('=== COMMENT CREATION REQUEST ===');
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Params:', req.params);
+  console.log('Body:', req.body);
+  console.log('User:', req.user);
+  
+  const { postId } = req.params;
+  const { content } = req.body;
+  const authorId = req.user?.id;
+
+  if (!content) {
+    console.error('Missing content in request body');
+    return res.status(400).json({ error: 'Comment content is required' });
+  }
+  
+  if (!authorId) {
+    console.error('No authorId found in request.user');
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+
+  try {
+    console.log('Creating comment with:', { content, authorId, postId });
+    
+    const postExists = await prisma.post.findUnique({
+      where: { id: String(postId) }
+    });
+    
+    if (!postExists) {
+      console.error('Post not found:', postId);
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const comment = await prisma.comment.create({
+      data: {
+        content: String(content),
+        authorId: String(authorId),
+        postId: String(postId)
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    console.log('Comment created successfully:', comment);
+    return res.status(201).json(comment);
+    
+  } catch (error: unknown) {
+    console.error('Error creating comment:', error);
+    
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2003') {
+      return res.status(400).json({ 
+        error: 'Invalid post or user reference',
+        details: 'meta' in error ? error.meta : undefined
+      });
+    }
+    
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return res.status(500).json({ 
+      error: 'Failed to create comment',
+      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+    });
   }
 });
 

@@ -32,11 +32,10 @@ interface BlogPostData {
 }
 
 interface PostPageProps {
-  onLogout: () => void;
   isAuthenticated: boolean;
 }
 
-export default function PostPage({ onLogout, isAuthenticated }: PostPageProps) {
+export default function PostPage({ isAuthenticated }: PostPageProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [post, setPost] = useState<BlogPostData | null>(null);
@@ -52,10 +51,52 @@ export default function PostPage({ onLogout, isAuthenticated }: PostPageProps) {
     return new Date(dateString).toISOString().split('T')[0];
   };
 
+  const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
+    const token = localStorage.getItem('token');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...options.headers
+    };
+    
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      credentials: 'include'
+    });
+    
+    return response;
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  };
+
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const postResponse = await fetch(`http://localhost:3000/posts/${id}`);
+        const token = localStorage.getItem('token');
+        console.log('Current token:', token || 'No token found');
+        
+        try {
+          const userResponse = await fetchWithAuth('http://localhost:3000/users/profile');
+          console.log('Profile response status:', userResponse.status);
+          
+          if (userResponse.ok) {
+            const data = await userResponse.json();
+            console.log('User data received:', data);
+            setCurrentUser(data.user || data);
+          } else {
+            console.error('Failed to fetch user profile:', userResponse.status, userResponse.statusText);
+            setCurrentUser(null);
+          }
+        } catch (userError) {
+          console.error('Error fetching user data:', userError);
+          setCurrentUser(null);
+        }
+        
+        const postResponse = await fetchWithAuth(`http://localhost:3000/posts/${id}`);
         
         if (!postResponse.ok) {
           setError('Post not found');
@@ -65,23 +106,8 @@ export default function PostPage({ onLogout, isAuthenticated }: PostPageProps) {
         
         const postData = await postResponse.json();
         setPost(postData);
-        
-        try {
-          const userResponse = await fetch('http://localhost:3000/auth/me', {
-            credentials: 'include'
-          });
-          
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            setCurrentUser(userData);
-          } else if (userResponse.status === 401) {
-            setCurrentUser(null);
-          }
-        } catch (userError) {
-          console.error('Error fetching user data:', userError);
-          setCurrentUser(null);
-        }
       } catch (err) {
+        console.error('Error fetching post:', err);
         setError('Network error. Please try again.');
       } finally {
         setLoading(false);
@@ -94,21 +120,60 @@ export default function PostPage({ onLogout, isAuthenticated }: PostPageProps) {
   }, [id]);
 
   const handleAddComment = async (content: string) => {
+    console.log('handleAddComment called with content:', content);
+    
+    if (!currentUser) {
+      const error = 'Cannot post comment: No current user';
+      console.error(error);
+      throw new Error('You must be logged in to post a comment');
+    }
+
+    if (!id) {
+      const error = 'Cannot post comment: No post ID';
+      console.error(error);
+      throw new Error('No post ID found');
+    }
+
+    console.log('Posting comment with:', { 
+      content,
+      postId: id,
+      currentUser: currentUser.username 
+    });
+
     try {
       const response = await fetch(`http://localhost:3000/posts/${id}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         credentials: 'include',
         body: JSON.stringify({ content }),
       });
 
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to add comment');
+        let errorData;
+        try {
+          errorData = await response.json();
+          console.error('Error response from server:', errorData);
+        } catch (e) {
+          console.error('Failed to parse error response:', e);
+          errorData = { error: 'Failed to add comment' };
+        }
+        throw new Error(errorData.error || `Failed to add comment: ${response.status} ${response.statusText}`);
       }
 
-      const newComment = await response.json();
+      let newComment;
+      try {
+        newComment = await response.json();
+        console.log('Comment created successfully:', newComment);
+      } catch (e) {
+        console.error('Failed to parse success response:', e);
+        throw new Error('Failed to parse server response');
+      }
+      
       setPost(prevPost => {
         if (!prevPost) return null;
         return {
@@ -133,6 +198,16 @@ export default function PostPage({ onLogout, isAuthenticated }: PostPageProps) {
       </div>
     );
   }
+  
+  if (!post) {
+    return (
+      <div className="min-h-screen bg-gray-900 px-4 sm:px-4 py-8">
+        <div className="max-w-4xl mx-auto text-center py-12">
+          <p className="text-red-400">Post not found</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error || !post) {
     return (
@@ -142,10 +217,10 @@ export default function PostPage({ onLogout, isAuthenticated }: PostPageProps) {
             <p className="text-gray-400 text-lg">{error || 'Post not found'}</p>
           </div>
           <button
-            onClick={() => navigate('/')}
-            className="text-blue-400 hover:text-blue-300 text-sm cursor-pointer"
+            onClick={() => window.location.href = '/'}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            &larr; Back to blog
+            Back to Home
           </button>
         </div>
       </div>
@@ -205,10 +280,10 @@ export default function PostPage({ onLogout, isAuthenticated }: PostPageProps) {
           {isAuthenticated && (
             <div className="flex justify-end mb-8 mt-20">
               <button
-                onClick={onLogout}
-                className="text-gray-400 hover:text-white text-sm cursor-pointer"
+                onClick={handleLogout}
+                className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
               >
-                Logout
+                Sign out
               </button>
             </div>
           )}

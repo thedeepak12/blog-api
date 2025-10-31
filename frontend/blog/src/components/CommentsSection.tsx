@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 interface Comment {
   id: string;
@@ -20,7 +20,6 @@ interface CommentsSectionProps {
 export default function CommentsSection({
   comments = [],
   onAddComment,
-  currentUser,
   isAuthenticated,
 }: CommentsSectionProps) {  const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,7 +82,9 @@ export default function CommentsSection({
         {comments.length === 0 ? (
           <p className="text-gray-400 italic">No comments yet. Be the first to comment!</p>
         ) : (
-          comments.map((comment) => (
+          [...comments]
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .map((comment) => (
             <div key={comment.id} className="p-4 border border-gray-700 rounded-lg bg-gray-800">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-white font-bold">{comment.author.username}</span>

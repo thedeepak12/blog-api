@@ -26,7 +26,11 @@
     "paths": {
       "@/*": ["*"]
     },
-    "types": ["node"]
+    "types": ["node"],
+  "typeRoots": [
+    "./node_modules/@types",
+    "./types"
+  ]
   },
   "include": ["**/*.ts", "views/**/*.ts"],
   "exclude": ["node_modules", "dist", "public"]
