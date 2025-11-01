@@ -5,7 +5,6 @@ import { PrismaClient } from '@prisma/client';
 import './config/passport.js';
 import postsRouter from './routes/posts.js';
 import usersRouter from './routes/users.js';
-import { authenticateJWT } from './middleware/auth.js';
 
 dotenv.config();
 
