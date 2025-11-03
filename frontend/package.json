@@ -1,0 +1,17 @@
+{
+  "name": "blog-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "dev:admin": "cd admin && npm run dev",
+    "dev:blog": "cd blog && npm run dev"
+  },
+  "dependencies": {
+    "fs-extra": "^11.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}
