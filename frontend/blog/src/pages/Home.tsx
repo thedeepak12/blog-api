@@ -24,15 +24,28 @@ export default function Home({ onLogout, isAuthenticated }: HomeProps) {
 
   useEffect(() => {
     const fetchPosts = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/posts');
+      try {        
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/posts`, {
+          credentials: 'include'
+        });
+        console.log('Response status:', response.status);
+        
         if (response.ok) {
           const data = await response.json();
-          setPosts(data.posts || []);
+          console.log('Received data:', data);
+          
+          if (data && Array.isArray(data.posts)) {
+            setPosts(data.posts);
+          } else {
+            console.warn('Unexpected data format:', data);
+            setPosts([]);
+          }
         } else {
+          console.error('Failed to fetch posts:', response.statusText);
           setPosts([]);
         }
       } catch (err) {
+        console.error('Error fetching posts:', err);
         setPosts([]);
       }
     };

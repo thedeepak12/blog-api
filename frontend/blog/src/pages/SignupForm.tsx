@@ -28,7 +28,7 @@ export default function SignupForm({ setToken }: SignupFormProps) {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/users/signup', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

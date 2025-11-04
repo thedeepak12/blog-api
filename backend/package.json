@@ -10,9 +10,14 @@
     "build:ts": "tsc",
     "watch:ts": "tsc --watch",
     "prisma:generate": "npx prisma generate",
-    "start": "node dist/app.js",
-    "dev": "concurrently \"npm run watch:ts\" \"nodemon dist/app.js\"",
-    "seed": "tsx seed.ts"
+    "start": "set NODE_ENV=production&& node dist/app.js",
+    "dev": "tsx --env-file=.env.development --watch app.ts",
+    "dev:env": "set NODE_ENV=development&& tsx watch --env-file=.env.development -- src/app.ts",
+    "prod:start": "set NODE_ENV=production&& node dist/app.js",
+    "migrate:dev": "set NODE_ENV=development&& npx prisma migrate dev",
+    "migrate:deploy": "set NODE_ENV=production&& npx prisma migrate deploy",
+    "seed:dev": "set NODE_ENV=development&& tsx seed.ts",
+    "seed:prod": "set NODE_ENV=production&& tsx seed.ts"
   },
   "keywords": [],
   "author": "",

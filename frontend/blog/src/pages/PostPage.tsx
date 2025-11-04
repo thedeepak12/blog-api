@@ -52,6 +52,10 @@ export default function PostPage({ isAuthenticated }: PostPageProps) {
   };
 
   const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
+    const baseUrl = import.meta.env.VITE_API_URL || '';
+    const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+    const fullUrl = url.startsWith('http') ? url : `${baseUrl.replace(/\/$/, '')}/${cleanUrl}`;
+
     const token = localStorage.getItem('token');
     const headers = {
       'Content-Type': 'application/json',
@@ -59,11 +63,22 @@ export default function PostPage({ isAuthenticated }: PostPageProps) {
       ...options.headers
     };
     
-    const response = await fetch(url, {
+    const response = await fetch(fullUrl, {
       ...options,
-      headers,
-      credentials: 'include'
+      headers: {
+        ...headers,
+        ...(options.headers || {}),
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
     });
+    
+    if (!response.ok) {
+      console.error('Request failed:', response.status, response.statusText);
+      const errorData = await response.text();
+      console.error('Error response:', errorData);
+      throw new Error(`Request failed with status ${response.status}`);
+    }
     
     return response;
   };
@@ -80,7 +95,7 @@ export default function PostPage({ isAuthenticated }: PostPageProps) {
         console.log('Current token:', token || 'No token found');
         
         try {
-          const userResponse = await fetchWithAuth('http://localhost:3000/users/profile');
+          const userResponse = await fetchWithAuth('/users/profile');
           console.log('Profile response status:', userResponse.status);
           
           if (userResponse.ok) {
@@ -96,7 +111,7 @@ export default function PostPage({ isAuthenticated }: PostPageProps) {
           setCurrentUser(null);
         }
         
-        const postResponse = await fetchWithAuth(`http://localhost:3000/posts/${id}`);
+        const postResponse = await fetchWithAuth(`/posts/${id}`);
         
         if (!postResponse.ok) {
           setError('Post not found');
@@ -141,13 +156,8 @@ export default function PostPage({ isAuthenticated }: PostPageProps) {
     });
 
     try {
-      const response = await fetch(`http://localhost:3000/posts/${id}/comments`, {
+      const response = await fetchWithAuth(`/posts/${id}/comments`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        credentials: 'include',
         body: JSON.stringify({ content }),
       });
 

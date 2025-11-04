@@ -12,10 +12,14 @@ const app = express();
 const port = process.env.PORT || 3000;
 const prisma = new PrismaClient();
 
-app.use(cors({
-  origin: ['http://localhost:5173'],
+const corsOptions = {
+  origin: process.env.CORS_ORIGINS?.split(',').map(origin => origin.trim()),
   credentials: true,
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
