@@ -62,7 +62,7 @@ router.get('/profile', passport.authenticate('jwt', { session: false }), (req, r
   return res.json({ admin: req.user });
 });
 
-router.post('/logout', passport.authenticate('jwt', { session: false }), (req, res) => {
+router.post('/logout', passport.authenticate('jwt', { session: false }), (_req, res) => {
   return res.status(200).json({ message: 'Successfully logged out' });
 });
 

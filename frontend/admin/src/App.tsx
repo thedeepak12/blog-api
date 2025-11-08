@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import SignupForm from './pages/SignupForm';
 import Dashboard from './pages/Dashboard';
 import LoginForm from './pages/LoginForm';
