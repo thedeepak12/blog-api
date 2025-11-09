@@ -1,17 +1,68 @@
-import express from 'express';
-import { authenticateJWT } from '../middleware/auth.js';
+import express, { Request, Response, NextFunction, RequestHandler } from 'express';
+import passport from 'passport';
 import prisma from '../prisma/client.js';
+import { authenticateJWT } from '../middleware/auth.js';
+
+type UserPayload = {
+  id: string;
+  isAdmin?: boolean;
+};
+
+declare global {
+  namespace Express {
+    interface User {
+      id: string;
+      isAdmin?: boolean;
+    }
+    
+    interface Request {
+      user?: User;
+    }
+  }
+}
+
+const authenticateAdmin: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
+  return passport.authenticate('jwt', { session: false }, (err: Error | null, user?: UserPayload) => {
+    if (err) {
+      return next(err);
+    }
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    req.user = user;
+    next();
+  })(req, res, next);
+};
 
 const router = express.Router();
 
-router.get('/', async (_req, res) => {
+router.get('/', authenticateAdmin, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const posts = await prisma.post.findMany({
-      include: { author: true },
-      orderBy: { createdAt: 'desc' }
+      where: {
+        authorId: req.user.id
+      },
+      include: { 
+        author: {
+          select: {
+            id: true,
+            username: true,
+            email: true
+          }
+        } 
+      },
+      orderBy: { 
+        createdAt: 'desc' 
+      }
     });
+    
     return res.json({ posts });
   } catch (error) {
+    console.error('Error fetching posts:', error);
     return res.status(500).json({ error: 'Failed to fetch posts' });
   }
 });

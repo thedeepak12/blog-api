@@ -12,15 +12,28 @@ const opts = {
 
 passport.use(new JwtStrategy(opts, async (jwtPayload, done) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: jwtPayload.userId }
+    console.log('JWT Payload:', jwtPayload);
+    
+    const userId = jwtPayload.adminId || jwtPayload.userId || jwtPayload.id || jwtPayload.sub;
+    
+    if (!userId) {
+      console.error('No user ID found in JWT payload');
+      return done(null, false, { message: 'No user ID in token' });
+    }
+    
+    const admin = await prisma.admin.findUnique({
+      where: { id: userId }
     });
     
-    if (user) {
-      return done(null, user);
+    if (!admin) {
+      console.error('Admin not found for ID:', userId);
+      return done(null, false, { message: 'Admin not found' });
     }
-    return done(null, false);
+    
+    console.log('Authenticated admin:', { id: admin.id, email: admin.email });
+    return done(null, admin);
   } catch (error) {
+    console.error('Error in JWT authentication:', error);
     return done(error, false);
   }
 }));
