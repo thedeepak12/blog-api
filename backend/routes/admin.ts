@@ -35,7 +35,10 @@ router.post('/signup', async (req, res) => {
       },
     });
 
-    const token = jwt.sign({ adminId: admin.id }, JWT_SECRET);
+    const token = jwt.sign({ 
+      id: admin.id,
+      isAdmin: true
+    }, JWT_SECRET);
     return res.status(201).json({ token, redirect: '/admin/dashboard' });
   } catch (error) {
     return res.status(400).json({ error: 'Admin registration failed' });
@@ -51,7 +54,10 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ adminId: admin.id }, JWT_SECRET);
+    const token = jwt.sign({ 
+      id: admin.id,
+      isAdmin: true
+    }, JWT_SECRET);
     return res.json({ token, redirect: '/admin/dashboard' });
   } catch (error) {
     return res.status(400).json({ error: 'Login failed' });

@@ -10,28 +10,37 @@ const opts = {
   secretOrKey: JWT_SECRET
 };
 
-passport.use(new JwtStrategy(opts, async (jwtPayload, done) => {
+passport.use('jwt', new JwtStrategy(opts, async (jwtPayload, done) => {
   try {
     console.log('JWT Payload:', jwtPayload);
     
-    const userId = jwtPayload.adminId || jwtPayload.userId || jwtPayload.id || jwtPayload.sub;
+    const userId = jwtPayload.userId || jwtPayload.id || jwtPayload.sub;
     
     if (!userId) {
       console.error('No user ID found in JWT payload');
       return done(null, false, { message: 'No user ID in token' });
     }
-    
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (user) {
+      console.log('Authenticated user:', { id: user.id, email: user.email });
+      return done(null, { ...user, isAdmin: false });
+    }
+
     const admin = await prisma.admin.findUnique({
       where: { id: userId }
     });
     
-    if (!admin) {
-      console.error('Admin not found for ID:', userId);
-      return done(null, false, { message: 'Admin not found' });
+    if (admin) {
+      console.log('Authenticated admin:', { id: admin.id, email: admin.email });
+      return done(null, { ...admin, isAdmin: true });
     }
     
-    console.log('Authenticated admin:', { id: admin.id, email: admin.email });
-    return done(null, admin);
+    console.error('User not found for ID:', userId);
+    return done(null, false, { message: 'User not found' });
   } catch (error) {
     console.error('Error in JWT authentication:', error);
     return done(error, false);

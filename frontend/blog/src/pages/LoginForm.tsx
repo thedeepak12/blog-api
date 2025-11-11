@@ -18,25 +18,34 @@ export default function LoginForm({ setToken }: LoginFormProps) {
     setError('');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/login`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
+      const data = await response.json();
+      
       if (response.ok) {
-        const data = await response.json();
+        if (!data.token) {
+          throw new Error('No token received from server');
+        }
+        
+        console.log('Login successful, token:', data.token);
         localStorage.setItem('token', data.token);
         setToken(data.token);
-        navigate('/');
+        
+        window.location.href = '/';
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Login failed');
+        console.error('Login failed:', data);
+        setError(data.error || 'Login failed');
       }
     } catch (err) {
-      setError('Network error. Please try again.');
+      console.error('Login error:', err);
+      setError(err instanceof Error ? err.message : 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }

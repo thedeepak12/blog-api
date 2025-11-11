@@ -28,6 +28,7 @@ export default function LoginForm({ setToken }: LoginFormProps) {
 
       if (response.ok) {
         const data = await response.json();
+        localStorage.setItem('token', data.token);
         localStorage.setItem('adminToken', data.token);
         setToken(data.token);
         navigate('/dashboard');

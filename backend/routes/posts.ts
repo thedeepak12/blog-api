@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction, RequestHandler } from 'express';
 import passport from 'passport';
 import prisma from '../prisma/client.js';
-import { authenticateJWT } from '../middleware/auth.js';
+import { isAdmin } from '../middleware/auth.js';
 
 type UserPayload = {
   id: string;
@@ -36,7 +36,34 @@ const authenticateAdmin: RequestHandler = (req: Request, res: Response, next: Ne
 
 const router = express.Router();
 
-router.get('/', authenticateAdmin, async (req, res) => {
+router.get('/', async (_req, res) => {
+  try {
+    const posts = await prisma.post.findMany({
+      where: {
+        published: true
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            email: true
+          }
+        } 
+      },
+      orderBy: { 
+        createdAt: 'desc' 
+      }
+    });
+    
+    res.json({ posts });
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    res.status(500).json({ error: 'Failed to fetch posts' });
+  }
+});
+
+router.get('/admin', authenticateAdmin, async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -53,17 +80,17 @@ router.get('/', authenticateAdmin, async (req, res) => {
             username: true,
             email: true
           }
-        } 
+        }
       },
-      orderBy: { 
-        createdAt: 'desc' 
+      orderBy: {
+        createdAt: 'desc'
       }
     });
-    
-    return res.json({ posts });
+
+    res.json({ posts });
   } catch (error) {
-    console.error('Error fetching posts:', error);
-    return res.status(500).json({ error: 'Failed to fetch posts' });
+    console.error('Error fetching admin posts:', error);
+    res.status(500).json({ error: 'Failed to fetch posts' });
   }
 });
 
@@ -99,15 +126,58 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
-  const { title, content, authorId } = req.body;
+router.post('/', 
+  passport.authenticate('jwt', { session: false }),
+  isAdmin,
+  async (req, res) => {
+  const { title, content } = req.body;
+  const authorId = req.user?.id;
+  
+  console.log('Creating post with:', { title, content, authorId });
+  
+  if (!authorId) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+  
+  if (!title || !content) {
+    return res.status(400).json({ error: 'Title and content are required' });
+  }
+
   try {
     const post = await prisma.post.create({
-      data: { title, content, authorId }
+      data: { 
+        title: String(title), 
+        content: String(content), 
+        authorId: String(authorId),
+        published: true
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            email: true
+          }
+        }
+      }
     });
     return res.status(201).json(post);
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to create post' });
+    console.error('Error creating post:', error);
+    
+    if (error && typeof error === 'object' && 'code' in error) {
+      if (error.code === 'P2003') {
+        return res.status(400).json({ 
+          error: 'Invalid user reference',
+          details: 'meta' in error ? error.meta : undefined
+        });
+      }
+    }
+    
+    return res.status(500).json({ 
+      error: 'Failed to create post',
+      details: process.env.NODE_ENV === 'development' ? error : undefined
+    });
   }
 });
 
@@ -137,7 +207,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-router.post('/:postId/comments', authenticateJWT, async (req, res) => {
+router.post('/:postId/comments', passport.authenticate('jwt', { session: false }), async (req, res) => {
   console.log('=== COMMENT CREATION REQUEST ===');
   console.log('Headers:', JSON.stringify(req.headers, null, 2));
   console.log('Params:', req.params);

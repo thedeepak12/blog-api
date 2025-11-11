@@ -55,32 +55,47 @@ export default function PostPage({ isAuthenticated }: PostPageProps) {
     const baseUrl = import.meta.env.VITE_API_URL || '';
     const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
     const fullUrl = url.startsWith('http') ? url : `${baseUrl.replace(/\/$/, '')}/${cleanUrl}`;
-
+    
     const token = localStorage.getItem('token');
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
-      ...options.headers
-    };
+    console.log('Using token:', token ? 'Token found' : 'No token');
     
-    const response = await fetch(fullUrl, {
-      ...options,
-      headers: {
-        ...headers,
-        ...(options.headers || {}),
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-      },
-      credentials: 'include',
-    });
-    
-    if (!response.ok) {
-      console.error('Request failed:', response.status, response.statusText);
-      const errorData = await response.text();
-      console.error('Error response:', errorData);
-      throw new Error(`Request failed with status ${response.status}`);
+    const headers = new Headers(options.headers);
+    if (!headers.has('Content-Type')) {
+      headers.append('Content-Type', 'application/json');
     }
     
-    return response;
+    if (token && !headers.has('Authorization')) {
+      headers.append('Authorization', `Bearer ${token}`);
+    }
+    
+    console.log('Making request to:', fullUrl);
+    console.log('Headers:', Object.fromEntries(headers.entries()));
+    
+    try {
+      const response = await fetch(fullUrl, {
+        ...options,
+        headers,
+        credentials: 'include',
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Request failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: fullUrl,
+          response: errorText
+        });
+        throw new Error(`Request failed with status ${response.status}: ${errorText}`);
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Fetch error:', error);
+      throw error;
+    }
   };
 
   const handleLogout = () => {

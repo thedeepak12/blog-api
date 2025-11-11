@@ -1,23 +1,39 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import deleteIcon from '../assets/icons/delete.svg';
 
 export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [blogs, setBlogs] = useState([]);
+  interface BlogPost {
+    id: string;
+    title: string;
+    content: string;
+    published: boolean;
+    authorId: string;
+    createdAt: string;
+    updatedAt: string;
+    author?: {
+      id: string;
+      username: string;
+      email: string;
+    };
+  }
+
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
 
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const token = localStorage.getItem('adminToken');
+        let token = localStorage.getItem('token') || localStorage.getItem('adminToken');
         if (!token) {
-          console.error('No admin token found');
+          console.error('No authentication token found');
           return;
         }
 
         console.log('Making request to:', `${import.meta.env.VITE_API_URL || ''}/posts`);
         console.log('Using token:', token ? 'Token exists' : 'No token');
         
-        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/posts`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/posts/admin`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -124,12 +140,12 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-          <button 
+          <Link 
+            to="/create-blog"
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md cursor-pointer"
-            onClick={() => {}}
           >
             Write
-          </button>
+          </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {blogs.length > 0 ? (

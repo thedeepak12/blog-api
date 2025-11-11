@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import SignupForm from './pages/SignupForm';
 import Dashboard from './pages/Dashboard';
 import LoginForm from './pages/LoginForm';
+import CreateBlog from './pages/CreateBlog';
 
 type SetTokenType = Dispatch<SetStateAction<string | null>>;
 
@@ -50,6 +51,16 @@ function App() {
         element={
           token ? (
             <Dashboard />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        } 
+      />
+      <Route 
+        path="/create-blog" 
+        element={
+          token ? (
+            <CreateBlog />
           ) : (
             <Navigate to="/login" replace />
           )
