@@ -22,20 +22,22 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
   })(req, res, next);
 };
 
-export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+export const isAdmin = (req: Request, res: Response, next: NextFunction): void => {
   console.log('Checking admin status for user:', req.user);
   
   if (!req.user) {
     console.error('No user found in request');
-    return res.status(401).json({ error: 'Authentication required' });
+    res.status(401).json({ error: 'Authentication required' });
+    return;
   }
   
   if (req.user.isAdmin !== true) {
     console.error('User is not an admin:', req.user);
-    return res.status(403).json({ 
+    res.status(403).json({ 
       error: 'Admin access required',
       user: req.user
     });
+    return;
   }
   
   console.log('User is admin, proceeding...');

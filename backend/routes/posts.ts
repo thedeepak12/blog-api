@@ -3,26 +3,8 @@ import passport from 'passport';
 import prisma from '../prisma/client.js';
 import { isAdmin } from '../middleware/auth.js';
 
-type UserPayload = {
-  id: string;
-  isAdmin?: boolean;
-};
-
-declare global {
-  namespace Express {
-    interface User {
-      id: string;
-      isAdmin?: boolean;
-    }
-    
-    interface Request {
-      user?: User;
-    }
-  }
-}
-
 const authenticateAdmin: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
-  return passport.authenticate('jwt', { session: false }, (err: Error | null, user?: UserPayload) => {
+  const auth = passport.authenticate('jwt', { session: false }, (err: Error | null, user?: Express.User) => {
     if (err) {
       return next(err);
     }
@@ -30,8 +12,10 @@ const authenticateAdmin: RequestHandler = (req: Request, res: Response, next: Ne
       return res.status(401).json({ error: 'Unauthorized' });
     }
     req.user = user;
-    next();
-  })(req, res, next);
+    return next();
+  });
+  
+  return auth(req, res, next);
 };
 
 const router = express.Router();
@@ -65,13 +49,9 @@ router.get('/', async (_req, res) => {
 
 router.get('/admin', authenticateAdmin, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
-
     const posts = await prisma.post.findMany({
       where: {
-        authorId: req.user.id
+        authorId: req.user!.id
       },
       include: { 
         author: {
@@ -94,11 +74,11 @@ router.get('/admin', authenticateAdmin, async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
     const post = await prisma.post.findUnique({
-      where: { id },
+      where: { id: id as string },
       include: { 
         author: true,
         comments: {
@@ -118,11 +98,13 @@ router.get('/:id', async (req, res) => {
       }
     });
     if (!post) {
-      return res.status(404).json({ error: 'Post not found' });
+      res.status(404).json({ error: 'Post not found' });
+      return;
     }
-    return res.json(post);
+    res.json(post);
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to fetch post' });
+    console.error('Error fetching post:', error);
+    res.status(500).json({ error: 'Failed to fetch post' });
   }
 });
 

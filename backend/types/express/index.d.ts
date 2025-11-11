@@ -1,9 +1,10 @@
-import { User } from '@prisma/client';
+import { User as PrismaUser } from '@prisma/client';
 
 declare global {
   namespace Express {
-    interface User extends Omit<User, 'id'> {
+    interface User extends Omit<PrismaUser, 'id'> {
       id: string;
+      isAdmin: boolean;
     }
     
     interface Request {
