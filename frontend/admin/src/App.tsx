@@ -52,7 +52,7 @@ function App() {
           token ? (
             <Dashboard />
           ) : (
-            <Navigate to="/login" replace />
+            <Navigate to="/signup" replace />
           )
         } 
       />
@@ -62,7 +62,7 @@ function App() {
           token ? (
             <CreateBlog />
           ) : (
-            <Navigate to="/login" replace />
+            <Navigate to="/signup" replace />
           )
         } 
       />
@@ -72,7 +72,7 @@ function App() {
           token ? (
             <Navigate to="/dashboard" replace />
           ) : (
-            <Navigate to="/login" replace />
+            <Navigate to="/signup" replace />
           )
         } 
       />

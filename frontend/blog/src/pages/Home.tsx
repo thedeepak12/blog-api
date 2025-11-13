@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import BlogPost from '../components/BlogPost';
+import MenuIcon from '../assets/icons/menu.svg';
 
 interface BlogPostData {
   id: string;
@@ -20,7 +22,7 @@ interface HomeProps {
 
 export default function Home({ onLogout, isAuthenticated }: HomeProps) {
   const [posts, setPosts] = useState<BlogPostData[]>([]);
-  const [error, setError] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -56,23 +58,70 @@ export default function Home({ onLogout, isAuthenticated }: HomeProps) {
   return (
     <div className="min-h-screen bg-gray-900 px-4 sm:px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Blog</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 w-full">
+          <div className="flex justify-between items-center w-full sm:w-auto">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white">Blog</h1>
+            <button 
+              className="sm:hidden text-white p-2"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              <img src={MenuIcon} alt="Menu" className="w-6 h-6" />
+            </button>
+          </div>
           {isAuthenticated ? null : (
-            <div className="space-x-4">
-              <a
-                href="/login"
-                className="px-4 py-2 bg-gray-900 text-white rounded-md outline-1 outline-white"
-              >
-                Login
-              </a>
-              <a
-                href="/signup"
-                className="px-4 py-2 bg-gray-900 text-white rounded-md outline-1 outline-white"
-              >
-                Sign Up
-              </a>
-            </div>
+            <>
+              <div className="hidden sm:flex flex-wrap gap-2 sm:gap-4 w-full sm:w-auto">
+                <a 
+                  href={`${import.meta.env.VITE_ADMIN_APP_URL || 'http://localhost:5174'}`}
+                  className="px-3 sm:px-4 py-2 bg-gray-900 text-[#FFD700] rounded-md outline-1 outline-[#FFD700] text-sm sm:text-base whitespace-nowrap text-center w-full sm:w-auto"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Become a writer
+                </a>
+                <Link
+                  to="/login"
+                  className="px-3 sm:px-4 py-2 bg-gray-900 text-white rounded-md outline-1 outline-white text-sm sm:text-base whitespace-nowrap text-center w-full sm:w-auto"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-3 sm:px-4 py-2 bg-gray-900 text-white rounded-md outline-1 outline-white text-sm sm:text-base whitespace-nowrap text-center w-full sm:w-auto"
+                >
+                  Sign Up
+                </Link>
+              </div>
+              
+              {isMenuOpen && (
+                <div className="sm:hidden w-full flex flex-col gap-2 bg-gray-800 p-4 rounded-md mt-2">
+                  <a 
+                    href={`${import.meta.env.VITE_ADMIN_APP_URL || 'http://localhost:5174'}`}
+                    className="px-4 py-3 bg-gray-900 text-[#FFD700] rounded-md outline-1 outline-[#FFD700] text-center w-full"
+                    onClick={() => setIsMenuOpen(false)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Become a writer
+                  </a>
+                  <Link
+                    to="/login"
+                    className="px-4 py-3 bg-gray-900 text-white rounded-md outline-1 outline-white text-center w-full"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/signup"
+                    className="px-4 py-3 bg-gray-900 text-white rounded-md outline-1 outline-white text-center w-full"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )}
+            </>
           )}
         </div>
 
